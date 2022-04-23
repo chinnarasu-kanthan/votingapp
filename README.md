@@ -1,7 +1,7 @@
 
-# Tech-Admin | Laravel 8 + Bootstrap 4 
+# Voting-Admin | Laravel 8 + Bootstrap 4 
 
-Tech-Admin is Admin Panel With Preset of Roles, Permissions, ACL, User Management, Profile Management.
+Voting-Admin is Admin Panel With Preset of Roles, Permissions, ACL, User Management, Profile Management.
 
 
 
@@ -27,7 +27,7 @@ Tech-Admin is Admin Panel With Preset of Roles, Permissions, ACL, User Managemen
 
 ## Installation
 
-Install Tech-Admin With Simple Steps
+Install Voting-Admin With Simple Steps
 
 ```bash
 git clone https://github.com/TechTool-India/techtool-laravel-admin.git

@@ -8,6 +8,13 @@ use App\Rules\MatchOldPassword;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Http;
+use App\Models\Category;
+use App\Models\Answers;
+use App\Models\Statements;
+use App\Models\Questions;
+use App\Models\Candidates;
+use App\Models\State;
+
 
 class HomeController extends Controller
 {
@@ -28,7 +35,30 @@ class HomeController extends Controller
      */
     public function index()
     {
-        return view('home');
+
+        $questions = Questions::select('id','question')->get();
+        $display = [];
+        foreach($questions as $key => $val){
+            
+            $display[$key]['id'] = $val->id;
+            $display[$key]['question'] = $val->question;
+            $display[$key]['items'] = $this->mapQuestionToanswer($val->id);
+            
+        }
+       
+        $statements = Statements::select('id','statement')->get();
+        // echo "<pre>";
+        // print_r($display);
+        // exit;
+        return view('home',["data" => $display,"statements" => $statements]);
+    }
+
+    private function mapQuestionToanswer($id){
+        $questions = Answers::select('id','answer')->where('question_id','=',$id)->get();
+        if( $questions){
+            return  $questions;
+        }
+        return [];
     }
 
     /**

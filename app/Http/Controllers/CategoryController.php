@@ -4,12 +4,11 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Spatie\Permission\Models\Permission;
-use Spatie\Permission\Models\Role;
+use App\Models\Category;
 
-class RolesController extends Controller
+class CategoryController extends Controller
 {
-    /**
+     /**
      * Create a new controller instance.
      *
      * @return void
@@ -17,10 +16,6 @@ class RolesController extends Controller
     public function __construct()
     {
         $this->middleware('auth');
-        $this->middleware('permission:role-list|role-create|role-edit|role-delete', ['only' => ['index']]);
-        $this->middleware('permission:role-create', ['only' => ['create','store']]);
-        $this->middleware('permission:role-edit', ['only' => ['edit','update']]);
-        $this->middleware('permission:role-delete', ['only' => ['destroy']]);
     }
 
     /**
@@ -30,10 +25,10 @@ class RolesController extends Controller
      */
     public function index()
     {
-        $roles = Role::paginate(10);
+        $category = Category::all();
 
-        return view('roles.index', [
-            'roles' => $roles
+        return view('category.index', [
+            'category' => $category
         ]);
     }
 
@@ -44,9 +39,9 @@ class RolesController extends Controller
      */
     public function create()
     {
-        $permissions = Permission::all();
+        $permissions = [];
 
-        return view('roles.add', ['permissions' => $permissions]);
+        return view('category.add', ['permissions' => $permissions]);
     }
 
     /**
@@ -60,17 +55,17 @@ class RolesController extends Controller
         DB::beginTransaction();
         try {
             $request->validate([
-                'name' => 'required',
-                'guard_name' => 'required'
+                'category_name' => 'required'
             ]);
     
-            Role::create($request->all());
+            Category::create($request->all());
 
             DB::commit();
-            return redirect()->route('roles.index')->with('success','Roles created successfully.');
+            return redirect()->route('category.index')->with('success','category created successfully.');
         } catch (\Throwable $th) {
             DB::rollback();
-            return redirect()->route('roles.add')->with('error',$th->getMessage());
+            
+            return redirect()->route('category.create')->with('error',$th->getMessage());
         }
         
     }
@@ -94,11 +89,10 @@ class RolesController extends Controller
      */
     public function edit($id)
     {
-        $role = Role::whereId($id)->with('permissions')->first();
+        $category = Category::whereId($id)->first();
         
-        $permissions = Permission::all();
 
-        return view('roles.edit', ['role' => $role, 'permissions' => $permissions]);
+        return view('category.edit', ['category' => $category]);
     }
 
     /**
@@ -115,25 +109,21 @@ class RolesController extends Controller
 
             // Validate Request
             $request->validate([
-                'name' => 'required',
-                'guard_name' => 'required'
+                'category_name' => 'required'
             ]);
             
-            $role = Role::whereId($id)->first();
+            $category = Category::whereId($id)->first();
 
-            $role->name = $request->name;
-            $role->guard_name = $request->guard_name;
-            $role->save();
+            $category->category_name = $request->category_name;
+            $category->description = $request->description;
+            $category->save();
 
-            // Sync Permissions
-            $permissions = $request->permissions;
-            $role->syncPermissions($permissions);
             
             DB::commit();
-            return redirect()->route('roles.index')->with('success','Roles updated successfully.');
+            return redirect()->route('category.index')->with('success','category updated successfully.');
         } catch (\Throwable $th) {
             DB::rollback();
-            return redirect()->route('roles.edit',['role' => $role])->with('error',$th->getMessage());
+            return redirect()->route('category.edit',['category' => $category])->with('error',$th->getMessage());
         }
     }
 
@@ -148,13 +138,13 @@ class RolesController extends Controller
         DB::beginTransaction();
         try {
     
-            Role::whereId($id)->delete();
+            Category::whereId($id)->delete();
             
             DB::commit();
-            return redirect()->route('roles.index')->with('success','Roles deleted successfully.');
+            return redirect()->route('category.index')->with('success','category deleted successfully.');
         } catch (\Throwable $th) {
             DB::rollback();
-            return redirect()->route('roles.index')->with('error',$th->getMessage());
+            return redirect()->route('category.index')->with('error',$th->getMessage());
         }
     }
 }

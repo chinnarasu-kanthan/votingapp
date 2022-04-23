@@ -1,9 +1,12 @@
 <?php
-
+ini_set('max_execution_time', 300);
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\UserController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use App\Models\Districts;
+
 
 /*
 |--------------------------------------------------------------------------
@@ -32,7 +35,11 @@ Route::prefix('profile')->name('profile.')->middleware('auth')->group(function()
 });
 
 // Roles
-Route::resource('roles', App\Http\Controllers\RolesController::class);
+Route::resource('category', App\Http\Controllers\CategoryController::class);
+Route::resource('state', App\Http\Controllers\StateController::class);
+Route::resource('districts', App\Http\Controllers\DistrictsController::class);
+Route::resource('candidates', App\Http\Controllers\CandidatesController::class);
+Route::resource('statements', App\Http\Controllers\StatementController::class);
 
 // Permissions
 Route::resource('permissions', App\Http\Controllers\PermissionsController::class);
@@ -53,5 +60,25 @@ Route::middleware('auth')->prefix('users')->name('users.')->group(function(){
 
     Route::get('export/', [UserController::class, 'export'])->name('export');
 
+});
+
+Route::get('/information/create/ajax-state',function(Request $request)
+{
+    $state_id = $request->input('state_id');
+    $subcategories = Districts::select('id',"district_name")->where('state_id','=',$state_id)->get();
+    return $subcategories;
+
+});
+
+Route::get('excel-test', function () {
+    // http://localhost/assets/panel/excel/test123.xls
+    // /public/assets/panel/excel/test123.xls
+    $address = './assets/files/data.xlsx';
+    
+    $array = Excel::import([],'file.xls', function($reader) {
+
+    })->get();    
+    dd($array);
+    
 });
 

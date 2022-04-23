@@ -12,6 +12,12 @@ use Illuminate\Support\Facades\Hash;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules\Password;
+use App\Models\Category;
+use App\Models\Answers;
+use App\Models\Statements;
+use App\Models\Questions;
+use App\Models\Candidates;
+use App\Models\State;
 
 class UserController extends Controller
 {
@@ -23,10 +29,6 @@ class UserController extends Controller
     public function __construct()
     {
         $this->middleware('auth');
-        $this->middleware('permission:user-list|user-create|user-edit|user-delete', ['only' => ['index']]);
-        $this->middleware('permission:user-create', ['only' => ['create','store', 'updateStatus']]);
-        $this->middleware('permission:user-edit', ['only' => ['edit','update']]);
-        $this->middleware('permission:user-delete', ['only' => ['delete']]);
     }
 
 
@@ -240,9 +242,148 @@ class UserController extends Controller
 
     public function uploadUsers(Request $request)
     {
-        Excel::import(new UsersImport, $request->file);
-        
-        return redirect()->route('users.index')->with('success', 'User Imported Successfully');
+    
+    $candidate_ids = [];
+    $results = Excel::toArray("", $request->file);
+    echo "<pre>";
+
+    $parent = "";
+    $child = "";
+    $new_arr = [];
+    
+
+   
+    foreach($results[0] as $key =>$result){
+       // if(empty(Category::where('category_name','=',$result[0])->first())){
+            //print_r($result[0]);
+            //$Category = new Category;
+
+            // candidate
+
+            
+            if($key ===1){
+               
+                foreach($result as $k => $v){
+                    $name = explode(" ", $v);
+                   
+                   // exit;
+                    if($k > 2 && $v !=""){
+                        
+                    $candidate = new Candidates;
+                    $candidate->firstName = $name[0];
+                    $candidate->lastName = $name[1];
+                    $candidate->party = $results[0][2][$k];
+                    $candidate->type = 1;
+                    $candidate->state = $this->getState($results[0][3][$k]);
+                    $candidate->district = 1;
+                    $candidate->status = "Y";
+                    $candidate->save();
+                    array_push($candidate_ids,$candidate->id);
+                    }
+                }
+                
+            }
+            
+            if($result[0] != ""){
+                
+                $parent = $result[0];
+            }
+            if($result[1] != ""  ){
+                
+                $child = $result[1];
+            }
+            // use App\Models\Answers;
+            // use App\Models\Statements;
+            // use App\Models\Questions;
+            // use App\Models\Candidates;
+            // use App\Models\State;
+            
+            if($child != "" && $key > 5  ){
+
+                $cat = Category::where('category_name','=',$parent)->first();
+                //dd( $cat );
+                if(!($cat)){
+                    $main = "";
+                    $category = new Category;
+                    $category->category_name = $parent ;
+                    $category->description = $parent ;
+                    $category->status ="Y";
+                    $category->save();
+                    $main = $category->id;
+                }
+                else{
+                  
+                    $main = $cat->id;
+                }
+                if(!(str_contains($child, 'statement'))){
+                    $quiz = Questions::where('question','=',$child)->first();
+                    //dd($result[1]);
+                
+                    if ($quiz) { 
+                        $questionsId =  $quiz->id;
+                    }else{
+                    
+                        
+                            $questions = new Questions;
+                            $questions->cat_id =  $main;
+                            $questions->question =$child;
+                            $questions->description = null;
+                            $questions->point = 1;
+                            
+                            $questions->save();
+                            $questionsId = $questions->id;
+                            }
+                    
+                    
+                }
+                $u = 3;
+               
+                for($j=0; $j < sizeof($candidate_ids);$j++){
+                  
+                  
+                    if ((str_contains($result[2], 'Answer'))) { 
+                       
+                        $answers = new Answers();
+                        $answers->candidate_id = $candidate_ids[$j];
+                        $answers->question_id = $questionsId;
+                        $answers->answer = $result[$u++] ;
+                        $answers->type = "1";
+                        $answers->point = 0;
+                        $answers->status ='Y';
+                        $answers->save();
+                    }
+                }
+    
+            } 
+            
+            if ((str_contains($result[1], 'statement'))) { 
+                $i = 3;
+                 foreach($candidate_ids as $a =>$b){
+                       
+                            if( $result[$i] !=""){
+                            $statements = new Statements;
+                            $statements->candidate_id = $b;
+                            $statements->statement = $result[$i];
+                            $statements->description = "";
+                            $statements->point = 1;
+                            $statements->type =1;
+                            $statements->save() ;
+                            }
+                        
+                    $i++;
+                   
+                 }
+            }
+
+            
+          
+       // }
+
+    }
+  
+  
+    
+        return redirect()->route('users.import-users')->with('success', 'Data Imported Successfully');
     }
 
     public function export() 
@@ -250,4 +391,21 @@ class UserController extends Controller
         return Excel::download(new UsersExport, 'users.xlsx');
     }
 
+    private function getState($str){
+        $stateId = State::where('state_name','=',$str)->first();
+        if($stateId){
+          $id =  $stateId->id;
+        }else{
+            $state = new State;
+            $state->state_name =$str;
+            $state->status ='Y';
+            $state->save();
+          $id = $state->id;
+
+        }
+        return $id;
+    }
+
 }
+
+

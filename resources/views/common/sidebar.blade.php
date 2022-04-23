@@ -5,7 +5,7 @@
         <div class="sidebar-brand-icon rotate-n-15">
             <i class="fas fa-university"></i>
         </div>
-        <div class="sidebar-brand-text mx-3">Tech-Admin</div>
+        <div class="sidebar-brand-text mx-3">Voting-Admin</div>
     </a>
 
     <!-- Divider -->
@@ -37,7 +37,7 @@
             <div class="bg-white py-2 collapse-inner rounded">
                 <h6 class="collapse-header">User Management:</h6>
                 <a class="collapse-item" href="{{ route('users.index') }}">List</a>
-                <a class="collapse-item" href="{{ route('users.create') }}">Add New</a>
+                <!-- <a class="collapse-item" href="{{ route('users.create') }}">Add New</a> -->
                 <a class="collapse-item" href="{{ route('users.import') }}">Import Data</a>
             </div>
         </div>
@@ -46,7 +46,7 @@
     <!-- Divider -->
     <hr class="sidebar-divider">
 
-    @hasrole('Admin')
+ 
         <!-- Heading -->
         <div class="sidebar-heading">
             Admin Section
@@ -61,17 +61,18 @@
             </a>
             <div id="collapsePages" class="collapse" aria-labelledby="headingPages" data-parent="#accordionSidebar">
                 <div class="bg-white py-2 collapse-inner rounded">
-                    <h6 class="collapse-header">Role & Permissions</h6>
-                    <a class="collapse-item" href="{{ route('roles.index') }}">Roles</a>
-                    <a class="collapse-item" href="{{ route('permissions.index') }}">Permissions</a>
+                    <a class="collapse-item" href="{{ route('candidates.index') }}">Candidate</a>
+                    <a class="collapse-item" href="{{ route('category.index') }}">Category</a>
+                    <a class="collapse-item" href="{{ route('statements.index') }}">Statement</a>
+                    <a class="collapse-item" href="{{ route('state.index') }}">State</a>
+                    <a class="collapse-item" href="{{ route('districts.index') }}">District</a>
                 </div>
             </div>
         </li>
 
         <!-- Divider -->
         <hr class="sidebar-divider d-none d-md-block">
-    @endhasrole
-
+ 
     <li class="nav-item">
         <a class="nav-link" href="#" data-toggle="modal" data-target="#logoutModal">
             <i class="fas fa-sign-out-alt"></i>
