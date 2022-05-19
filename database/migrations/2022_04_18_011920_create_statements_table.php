@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('description')->nullable();
             $table->float('point');
             $table->integer('type');
+            $table->integer('question_id');
             $table->enum('status', ['Y', 'N']);
             $table->timestamps();
         });

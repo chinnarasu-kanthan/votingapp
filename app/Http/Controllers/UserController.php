@@ -12,12 +12,15 @@ use Illuminate\Support\Facades\Hash;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules\Password;
+use Illuminate\Support\Facades\Storage;
+
 use App\Models\Category;
 use App\Models\Answers;
 use App\Models\Statements;
 use App\Models\Questions;
 use App\Models\Candidates;
 use App\Models\State;
+use App\Models\Candidateanswer;
 
 class UserController extends Controller
 {
@@ -244,147 +247,184 @@ class UserController extends Controller
     {
     
     $candidate_ids = [];
-    $results = Excel::toArray("", $request->file);
-    echo "<pre>";
+	$file = storage_path('app/Voting Genie - Database sample final (1).xlsx');
+    $results = Excel::toArray("", $file);
+    
 
     $parent = "";
     $child = "";
     $new_arr = [];
     
-
+echo "<pre>";
    
     foreach($results[0] as $key =>$result){
-       // if(empty(Category::where('category_name','=',$result[0])->first())){
-            //print_r($result[0]);
-            //$Category = new Category;
-
-            // candidate
-
-            
-            if($key ===1){
+	
+ //$result = array_filter($result, fn($value) => !is_null($value) && $value !== '');
+ 
+ if(sizeof($result) > 0){
+//  echo $key; 
+//  print_r($result);
+                
+                    if($key ===1){
                
-                foreach($result as $k => $v){
-                    $name = explode(" ", $v);
-                   
-                   // exit;
-                    if($k > 2 && $v !=""){
-                        
-                    $candidate = new Candidates;
-                    $candidate->firstName = $name[0];
-                    $candidate->lastName = $name[1];
-                    $candidate->party = $results[0][2][$k];
-                    $candidate->type = 1;
-                    $candidate->state = $this->getState($results[0][3][$k]);
-                    $candidate->district = 1;
-                    $candidate->status = "Y";
-                    $candidate->save();
-                    array_push($candidate_ids,$candidate->id);
-                    }
-                }
-                
-            }
-            
-            if($result[0] != ""){
-                
-                $parent = $result[0];
-            }
-            if($result[1] != ""  ){
-                
-                $child = $result[1];
-            }
-            // use App\Models\Answers;
-            // use App\Models\Statements;
-            // use App\Models\Questions;
-            // use App\Models\Candidates;
-            // use App\Models\State;
-            
-            if($child != "" && $key > 5  ){
+                        foreach($result as $k => $v){
+                          
+                           
+                           // exit;
+                            if($k > 1 ){
+                                if($results[0][3][$k] !=""){
+                                $candidate = Candidates::where([
 
-                $cat = Category::where('category_name','=',$parent)->first();
-                //dd( $cat );
-                if(!($cat)){
-                    $main = "";
-                    $category = new Category;
-                    $category->category_name = $parent ;
-                    $category->description = $parent ;
-                    $category->status ="Y";
-                    $category->save();
-                    $main = $category->id;
-                }
-                else{
-                  
-                    $main = $cat->id;
-                }
-                if(!(str_contains($child, 'statement'))){
-                    $quiz = Questions::where('question','=',$child)->first();
-                    //dd($result[1]);
+                                        ['firstName', '=',  $results[0][0][$k]],['lastName', '=', $results[0][1][$k]],
+                                        ['party', '=',  $results[0][2][$k]],['state', '=', $this->getState($results[0][3][$k])]
+                                
+                                    ])->first();
+                                  
+                                    if(!($candidate)){
+                                            $candidate = new Candidates;
+                                            $candidate->firstName = $results[0][0][$k];
+                                            $candidate->lastName = $results[0][1][$k];
+                                            $candidate->party = $results[0][2][$k];
+                                            $candidate->type = ($results[0][5][$k] == 'U.S. Senate') ? 1 : 2;
+                                            $candidate->state = $this->getState($results[0][3][$k]);
+                                            $candidate->district = $results[0][4][$k] ? $results[0][4][$k] : 0 ; 
+                                            $candidate->status = "Y";
+                                            $candidate->save();
+                                            $c_id =$candidate->id;
+                                            }
+
+                                    else{
+                                        $c_id= $candidate->id;
+                                    }
+                                    array_push($candidate_ids,$c_id);
+                                        }
+                                    }
+                                }
+                                
+                            }
+					
                 
-                    if ($quiz) { 
-                        $questionsId =  $quiz->id;
-                    }else{
-                    
-                        
-                            $questions = new Questions;
-                            $questions->cat_id =  $main;
-                            $questions->question =$child;
-                            $questions->description = null;
-                            $questions->point = 1;
+                            if($result[0] != ""){
+                
+                                $parent = $result[0];
+                            }
+                            if($result[1] != ""  ){
+                                
+                                $child = $result[1];
+                            }
+                            // use App\Models\Answers;
+                            // use App\Models\Statements;
+                            // use App\Models\Questions;
+                            // use App\Models\Candidates;
+                            // use App\Models\State;
                             
-                            $questions->save();
-                            $questionsId = $questions->id;
-                            }
+                            if($child != "" && $key > 5  ){
+                
+                                $cat = Category::where('category_name','=',$parent)->first();
+                                //dd( $cat );
+                                if(!($cat)){
+                                    $main = "";
+                                    $category = new Category;
+                                    $category->category_name = $parent ;
+                                    $category->description = $parent ;
+                                    $category->status ="Y";
+                                    $category->save();
+                                    $main = $category->id;
+                                }
+                                else{
+                                  
+                                    $main = $cat->id;
+                                }
+                                
+                                $questionsId = 0;
+                                $quiz = Questions::where('question','=',$child)->first();
+                                if(!(str_contains(strtolower($child), 'statement'))){
+                                    
+                                    //dd($result[1]);
+                                
+                                    if ($quiz) { 
+                                        $questionsId =  $quiz->id;
+                                    }else{
+                                    
+                                        
+                                            $questions = new Questions;
+                                            $questions->cat_id =  $main;
+                                            $questions->question =$child;
+                                            $questions->description = null;
+                                            $questions->point = 1;
+                                            $questions->type = 1;
+                                            $questions->save();
+                                            $questionsId = $questions->id;
+                                     }
+                                    
+                                    
+                                }else{
+                                         if(!$quiz)  {
+                                    $questions = new Questions;
+                                            $questions->cat_id =  $main;
+                                            $questions->question =$child;
+                                            $questions->description = null;
+                                            $questions->point = 1;
+                                            $questions->type = 2;
+                                            $questions->save();
+                                         }
+                                }
+                                $u = 0;
+                              
+                                if (!(str_contains(strtolower($result[1]), 'statement'))) {
+                                unset($result[0]);
+                                unset($result[1]);
+                                $res = array_filter($result, fn($value) => !is_null($value) && $value !== '');
+                                $i = 0;
+                                foreach($res as $keys => $values){
+                                    $anwerId = $this->getAnsweId($questionsId,$values) ;
+                                    $candidate_id = $candidate_ids[$i++];
+                                    $candidateanswer = Candidateanswer::where([['candidate_id', '=',  $candidate_id],['answer_id', '=', $anwerId]])->first();
+                                  
+                                    if(!($candidateanswer)){
+                                    $candidateanswer = new Candidateanswer();
+                                    $candidateanswer->candidate_id = $candidate_id;
+                                    $candidateanswer->answer_id = $anwerId;
+                                    //print_r($candidateanswer);
+                                    $candidateanswer->save();
+                                    }
+                                }
+                               
+                                
+                                }else{
+                                    echo $main;
+                                    unset($result[0]);
+                                    unset($result[1]);
+                                    $resp = array_filter($result, fn($value) => !is_null($value) && $value !== '');
+                                    $m = 0;
+                                    foreach($resp as $key_s => $value_s){
+                                        $candidate_id = $candidate_ids[$m++];
+                                        $statements_first = Statements::where([['candidate_id', '=',  $candidate_id],['statement', '=', $value_s]])->first();
+                                      
+                                        if(!($statements_first)){
+                                        $statements = new Statements;
+                                        $statements->candidate_id = $candidate_id;
+                                        $statements->question_id = $main;
+                                        $statements->statement = $value_s;
+                                        $statements->description = "";
+                                        $statements->point = "0";
+                                        $statements->type =$this->candidateId($candidate_id);
+                                        $statements->save() ;
+                                        }
+                                    
+                                $i++;
+                               
+                             }
+                                }
                     
-                    
-                }
-                $u = 3;
-               
-                for($j=0; $j < sizeof($candidate_ids);$j++){
-                  
-                  
-                    if ((str_contains($result[2], 'Answer'))) { 
-                       
-                        $answers = new Answers();
-                        $answers->candidate_id = $candidate_ids[$j];
-                        $answers->question_id = $questionsId;
-                        $answers->answer = $result[$u++] ;
-                        $answers->type = "1";
-                        $answers->point = 0;
-                        $answers->status ='Y';
-                        $answers->save();
-                    }
-                }
-    
-            } 
-            
-            if ((str_contains($result[1], 'statement'))) { 
-                $i = 3;
-                 foreach($candidate_ids as $a =>$b){
-                       
-                            if( $result[$i] !=""){
-                            $statements = new Statements;
-                            $statements->candidate_id = $b;
-                            $statements->statement = $result[$i];
-                            $statements->description = "";
-                            $statements->point = 1;
-                            $statements->type =1;
-                            $statements->save() ;
-                            }
-                        
-                    $i++;
-                   
-                 }
-            }
-
-            
-          
-       // }
+                            } 
+        
+        }
+           
 
     }
-  
-  
-    
         return redirect()->route('users.import-users')->with('success', 'Data Imported Successfully');
-    }
+}
 
     public function export() 
     {
@@ -400,10 +440,31 @@ class UserController extends Controller
             $state->state_name =$str;
             $state->status ='Y';
             $state->save();
-          $id = $state->id;
+            $id = $state->id;
 
         }
         return $id;
+    }
+	
+	private function getAnsweId($questionId, $str){
+		
+        $AnwerId = Answers::where('answer','=',$str)->first();
+        if($AnwerId){
+          $id =  $AnwerId->id;
+        }else{
+			$answers = new Answers();
+			$answers->question_id = $questionId;
+			$answers->answer = $str;
+			$answers->status ='Y';
+			$answers->save();
+			$id = $answers->id;
+        }
+        return $id;
+    }
+	
+	private function candidateId($id){
+        $cid = Candidates::select('type')->where('id','=',$id)->first();
+        return $cid->type ? $cid->type :0;
     }
 
 }

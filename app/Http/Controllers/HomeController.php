@@ -53,11 +53,26 @@ class HomeController extends Controller
         return view('home',["data" => $display,"statements" => $statements]);
     }
 
-    private function mapQuestionToanswer($id){
-        $questions = Answers::select('id','answer')->where('question_id','=',$id)->get();
-        if( $questions){
-            return  $questions;
+    private function mapQuestionToanswer($id, $cat_id, $type){
+        if($type ==1){
+            $questions = Answers::leftjoin('candidateanswers','candidateanswers.answer_id', '=', 'answers.id')
+            ->leftjoin('candidates','candidateanswers.candidate_id', '=', 'candidates.id')
+            ->distinct('answers.id')
+            ->select('answers.id','answers.answer')->where('answers.question_id','=',$id)->get();
+            if( $questions){
+                return  $questions;
+            }
+        }else{
+            $statements = Statements::leftjoin('candidates','statements.candidate_id', '=', 'candidates.id')
+            ->distinct('statements.id')
+            ->where('candidates.state','=',1)
+            ->select('statements.id','statements.question_id','statements.statement')->where('statements.question_id','=',$cat_id)->get();
+            if( $statements){
+                return  $statements;
+            }
         }
+       
+       
         return [];
     }
 
@@ -71,6 +86,42 @@ class HomeController extends Controller
     {
         return view('profile');
     }
+	
+	public function showquestion()
+    {
+		$questions = Questions::select('cat_id','id','question','type')->get();
+       
+        $display = [];
+        foreach($questions as $key => $val){
+            
+            $display[$key]['id'] = $val->id;
+            $display[$key]['question'] = $val->question;
+            $display[$key]['items'] = $this->mapQuestionToanswer($val->id, $val->cat_id, $val->type);
+            $display[$key]['type'] = $val->type;
+            
+        }
+       
+        $statements = Statements::select('id','statement')->get();
+        // echo "<pre>";
+        // print_r($display);
+        // exit;
+        return view('layouts.frontapp',["data" => $display,"statements" => $statements]);
+   
+    }
+    public function mapQuestionTostatements()
+    {
+		
+        
+        $statements = Statements::join('candidates','candidates.id', '=', 'statements.candidate_id')
+        ->select('statements.id','statements.statement','candidates.type')->get();
+        echo "<pre>";
+        print_r($statements);
+        exit;
+        //return view('layouts.frontappstatment',["statements" => $statements]);
+   
+    }
+	
+	
 
     /**
      * Update Profile
@@ -140,4 +191,44 @@ class HomeController extends Controller
             return back()->with('error', $th->getMessage());
         }
     }
+	
+	public function getCandidate(Request $request)
+    {
+		
+        try {
+            
+
+        $new = [];
+        $res = Candidates::join('candidateanswers','candidateanswers.candidate_id', '=', 'candidates.id')
+        ->join('answers','candidateanswers.answer_id', '=', 'answers.id')
+		->join('questions','questions.id', '=', 'answers.question_id')
+        ->sum('questions.point')
+        ->select('candidates.id','answers.question_id','questions.point')
+		->where('candidates.state','=',1)
+        ->whereIn('answers.dd',$request->input('answers'))
+        ->groupBy('candidates.id')
+		->get();
+
+          
+        foreach($res as $val){
+        }
+            
+            dd($new);
+        } catch (\Throwable $th) {
+            dd($th->getMessage());
+            return back()->with('error', $th->getMessage());
+        }
+    }
+
+    // $questions = Answers::leftjoin('candidateanswers','candidateanswers.answer_id', '=', 'answers.id')
+    //     ->leftjoin('candidates','candidateanswers.candidate_id', '=', 'candidates.id')
+    //     ->where('candidates.state','=',1)
+    //     ->distinct('answers.id')
+    //     ->select('answers.id','answers.answer')->where('answers.question_id','=',$id)->get();
+    //     if( $questions){
+    //         return  $questions;
+    //     }
+    //     return [];
+    // }
+
 }

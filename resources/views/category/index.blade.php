@@ -35,7 +35,7 @@
                     <tbody>
                        @foreach ($category as $cat)
                            <tr>
-                               <td>{{$cat->category_name}}</td>
+                               <td>{{$cat->id}}</td>
                                <td>{{$cat->category_name}}</td>
                                <td style="display: flex">
                                    <a href="{{ route('category.edit', ['category' => $cat->id]) }}" class="btn btn-primary m-2">

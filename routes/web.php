@@ -56,7 +56,7 @@ Route::middleware('auth')->prefix('users')->name('users.')->group(function(){
 
     
     Route::get('/import-users', [UserController::class, 'importUsers'])->name('import');
-    Route::post('/upload-users', [UserController::class, 'uploadUsers'])->name('upload');
+    Route::get('/upload-users', [UserController::class, 'uploadUsers'])->name('upload');
 
     Route::get('export/', [UserController::class, 'export'])->name('export');
 
@@ -70,15 +70,8 @@ Route::get('/information/create/ajax-state',function(Request $request)
 
 });
 
-Route::get('excel-test', function () {
-    // http://localhost/assets/panel/excel/test123.xls
-    // /public/assets/panel/excel/test123.xls
-    $address = './assets/files/data.xlsx';
-    
-    $array = Excel::import([],'file.xls', function($reader) {
 
-    })->get();    
-    dd($array);
-    
-});
 
+ Route::get('/showquestion', [HomeController::class, 'showquestion'])->name('detail');
+ Route::post('/postcandidate', [HomeController::class, 'getCandidate'])->name('getCandidate');
+ Route::get('/showstatement', [HomeController::class, 'showstatement'])->name('detail');

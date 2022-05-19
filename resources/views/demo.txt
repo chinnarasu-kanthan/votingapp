@@ -1,0 +1,114 @@
+ if($result[0] != ""){
+                
+                $parent = $result[0];
+            }
+            if($result[1] != ""  ){
+                
+                $child = $result[1];
+            }
+            // use App\Models\Answers;
+            // use App\Models\Statements;
+            // use App\Models\Questions;
+            // use App\Models\Candidates;
+            // use App\Models\State;
+            
+            if($child != "" && $key > 5  ){
+
+                $cat = Category::where('category_name','=',$parent)->first();
+                //dd( $cat );
+                if(!($cat)){
+                    $main = "";
+                    $category = new Category;
+                    $category->category_name = $parent ;
+                    $category->description = $parent ;
+                    $category->status ="Y";
+                    $category->save();
+                    $main = $category->id;
+                }
+                else{
+                  
+                    $main = $cat->id;
+                }
+				
+				$questionsId = 0;
+                if(!(str_contains(strtolower($child), 'statement'))){
+                    $quiz = Questions::where('question','=',$child)->first();
+                    //dd($result[1]);
+                
+                    if ($quiz) { 
+                        $questionsId =  $quiz->id;
+                    }else{
+                    
+                        
+                            $questions = new Questions;
+                            $questions->cat_id =  $main;
+                            $questions->question =$child;
+                            $questions->description = null;
+                            $questions->point = 1;
+                            $questions->save();
+                            $questionsId = $questions->id;
+                     }
+                    
+                    
+                }
+                $u = 0;
+              
+
+
+                for($j=0; $j < sizeof($candidate_ids);$j++){
+                  
+                  //echo strtolower($result[1]);
+                    if (!(str_contains(strtolower($result[1]), 'statement'))) { 
+						$counter=0;
+						foreach($result as $rr => $vv){
+						
+								if ($counter == 0) continue;
+							if($vv !=" "){
+							
+								
+								$candidateanswer = new Candidateanswer();
+								$candidateanswer->candidate_id = $candidate_ids[$j];
+								$candidateanswer->answer_id = $this->getAnsweId($questionsId,$vv);
+								print_r($candidateanswer);
+								//$candidateanswer->save();
+							}
+							$counter++;
+						}
+						$counter =0;
+						
+                    
+					
+                    }
+                }
+    
+            } 
+
+            
+           /*  if (str_contains(strtolower($result[2]), 'statement')) { 
+                $i = 3;
+                 foreach($candidate_ids as $a =>$b){
+                       
+                            if( $result[$i] !=""){
+                            $statements = new Statements;
+                            $statements->candidate_id = $b;
+							$statements->question_id = $questionsId;
+                            $statements->statement = $result[$i];
+                            $statements->description = "";
+                            $statements->point = 1;
+                            $statements->type =$this->candidateId->type;
+                            $statements->save() ;
+                            }
+                        
+                    $i++;
+                   
+                 }
+            } */
+
+            
+          
+       // }]
+	   
+	   
+	   "SQLSTATE[42S22]: Column not found: 1054 Unknown column 'answers.candidate_id' in 'on clause' (SQL: select `candidates`.`id`, `answers`.`question_id`, `questions`.`point` from `candidates` inner join `answers` on `answers`.`candidate_id` = `candidates`.`id` inner join `questions` on `questions`.`id` = `answers`.`question_id` where `answers`.`id` in (1, 10, 13, 15, 26, 33, 39, 40, 49, 51, 58, 60, 68, 75, 79, 86, 91, 97, 101, 113, 118, 123, 126, 132, 141, 147, 152, 159, 164, 165, 173, 181, 186, 187))
+	   
+	         git push https://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@github.com/chinnarasu-kanthan/chinnarasu-kanthan.github.io.git
